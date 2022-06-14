@@ -11,3 +11,4 @@ htmlcov/
 *.bak
 .coverage
 .DS_Store
+.mypy_cache/

@@ -1,0 +1,19 @@
+name: linter check
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: updating dpendencies and do linter check
+        run: |
+          make full-install
+          make lint

@@ -8,6 +8,7 @@ authors = ["Artem Nechai <lenikol95@mail.ru>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 python-telegram-bot = "^13.12"
+python-dotenv = "^0.20.0"
 
 
 [tool.poetry.group.dev.dependencies]

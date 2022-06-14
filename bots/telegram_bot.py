@@ -18,8 +18,10 @@ def start(update: Update, context: CallbackContext) -> None:
         context: indicates that this is a callback function.
     """
     user = update.effective_user
-    if update.message:
-        update.message.reply_text(f'Hello, {user.first_name}!')
+    incoming_message = update.message
+    if incoming_message is None or user is None:
+        return
+    incoming_message.reply_text(f'Hello, {user.first_name}!')
 
 
 def echo(update: Update, context: CallbackContext) -> None:
@@ -29,8 +31,10 @@ def echo(update: Update, context: CallbackContext) -> None:
         update: incoming update object.
         context: indicates that this is a callback function.
     """
-    if update.message:
-        update.message.reply_text(str(update.message.text))
+    incoming_message = update.message
+    if incoming_message is None or incoming_message.text is None:
+        return
+    incoming_message.reply_text(incoming_message.text)
 
 
 def main() -> None:

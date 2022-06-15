@@ -4,7 +4,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,9 @@ def start(update: Update, context: CallbackContext) -> None:
     incoming_message = update.message
     if incoming_message is None or user is None:
         return
-    incoming_message.reply_text(f'Hello, {user.first_name}!')
+    keyboard_menu = [['Новый вопрос', 'Сдаться'], ['Мой счёт']]
+    reply_markup = ReplyKeyboardMarkup(keyboard_menu)
+    incoming_message.reply_text(text=f'Hello, {user.first_name}!', reply_markup=reply_markup)
 
 
 def echo(update: Update, context: CallbackContext) -> None:

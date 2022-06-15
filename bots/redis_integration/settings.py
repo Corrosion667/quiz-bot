@@ -3,9 +3,9 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-QUIZ_QUESTIONS_DIR = os.path.join(BASE_DIR, 'quiz_questions')
+QUIZ_TASKS_DIR = os.path.join(BASE_DIR, 'quiz_tasks')
 
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 REDIS_PORT = os.environ.get('REDIS_PORT', '6379')
-QUESTIONS_DATABASE = 1
+TASKS_DATABASE = 1
 USERS_DATABASE = 2

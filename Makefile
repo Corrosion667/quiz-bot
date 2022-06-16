@@ -1,5 +1,4 @@
 MYPY := poetry run mypy
-WPS := poetry run flake8 bots
 
 install:
 	poetry install --no-root

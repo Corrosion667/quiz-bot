@@ -1,12 +1,26 @@
+MYPY := poetry run mypy
+WPS := poetry run flake8 bots
+
 install:
 	poetry install --no-root
-	poetry run mypy --install-types --non-interactive
 
 full-install:
 	pip3 install --user poetry==1.2.0b2
-	poetry config virtualenvs.in-project true
 	make install
 
-lint:
+wps:
 	poetry run flake8 bots
-	poetry run mypy bots
+
+mypy:
+	$(MYPY) bots
+
+lint:
+	make wps
+	make mypy
+
+types:
+	$(MYPY) --install-types
+
+lint-pipeline:
+	make wps
+	$(MYPY) --install-types bots --non-interactive

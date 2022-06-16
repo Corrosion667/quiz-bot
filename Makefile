@@ -4,6 +4,7 @@ install:
 
 full-install:
 	pip3 install --user poetry==1.2.0b2
+	poetry config virtualenvs.in-project true
 	make install
 
 lint:

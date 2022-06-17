@@ -31,7 +31,7 @@ def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
         pipeline.set(question, answer)
 
 
-def load_quiz_tasks():
+def load_quiz_tasks() -> None:
     """Script for loading quiz questions and answers to Redis from all quiz files."""
     redis_client = Redis(db=TASKS_DATABASE)
     loading_pipeline = redis_client.pipeline()

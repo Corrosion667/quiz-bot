@@ -13,7 +13,7 @@ from telegram.ext import (
 )
 
 from bots.settings import (
-    GREETING, HELP_TEXT, TASKS_DATABASE, USERS_DATABASE, BotStates, ButtonText,
+    GREETING, HELP_TEXT, TASKS_DATABASE, USERS_DATABASE, SCORE_TEXT, BotStates, ButtonText,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,26 @@ def help_user(update: Update, context: CallbackContext) -> None:
     incoming_message = update.message
     if incoming_message is None:
         return
-    incoming_message.reply_text(text=f'{HELP_TEXT}')
+    incoming_message.reply_text(text=HELP_TEXT)
+
+
+def handler_score_request(update: Update, context: CallbackContext) -> None:
+    """Send user information about his successful and failure attempts
+
+    Args:
+        update: incoming update object.
+        context: indicates that this is a callback function.
+    """
+    user = update.effective_user
+    incoming_message = update.message
+    if incoming_message is None or user is None:
+        return
+    users_db = context.bot_data['users']
+    user_id_db = f'user_tg_{user.id}'
+    saved_user_data = json.loads(users_db.get(user_id_db))
+    successes = saved_user_data['success']
+    failures = saved_user_data['failure']
+    incoming_message.reply_text(text=SCORE_TEXT.format(successes=successes, failures=failures))
 
 
 def handle_new_question_request(update: Update, context: CallbackContext) -> Optional[int]:
@@ -114,6 +133,7 @@ def main() -> None:
         states={
             BotStates.CHOOSING.value: [
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
+                MessageHandler(Filters.regex('^Мой счёт$'), handler_score_request),
                 CommandHandler('help', help_user),
             ],
         },

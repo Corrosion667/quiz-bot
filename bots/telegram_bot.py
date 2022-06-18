@@ -155,7 +155,7 @@ def main() -> None:
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
                 MessageHandler(Filters.regex('^Мой счёт$'), handler_score_request),
                 CommandHandler('help', help_user),
-            ]
+            ],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )

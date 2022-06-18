@@ -16,7 +16,8 @@ class ButtonText(Enum):
 class BotStates(Enum):
     """Class with bot states for TG conversation handler."""
 
-    CHOOSING = 1
+    CHOOSING = 0
+    CHECK_ANSWER = 1
 
 
 QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')

@@ -87,20 +87,28 @@ def handler_score_request(update: Update, context: CallbackContext) -> None:
 
 
 def handle_new_question_request(update: Update, context: CallbackContext) -> Optional[int]:
-    """Send user a message.
+    """Send user a question.
 
     Args:
         update: incoming update object.
         context: indicates that this is a callback function.
 
     Returns:
-        Conversation state of command choosing.
+        Conversation state of checking user's answer.
     """
+    user = update.effective_user
     incoming_message = update.message
-    if incoming_message is None or incoming_message.text is None:
+    if incoming_message is None or user is None:
         return None
-    incoming_message.reply_text(incoming_message.text)
-    return BotStates.CHOOSING.value
+    tasks_db = context.bot_data['tasks']
+    random_question = tasks_db.randomkey()
+    user_id_db = f'user_tg_{user.id}'
+    users_db = context.bot_data['users']
+    saved_user_data = json.loads(users_db.get(user_id_db))
+    saved_user_data['last_asked_question'] = random_question
+    users_db.set(user_id_db, json.dumps(saved_user_data))
+    incoming_message.reply_text(random_question)
+    return BotStates.CHECK_ANSWER.value
 
 
 def cancel(update: Update, context: CallbackContext) -> Optional[int]:
@@ -143,6 +151,11 @@ def main() -> None:
                 MessageHandler(Filters.regex('^Мой счёт$'), handler_score_request),
                 CommandHandler('help', help_user),
             ],
+            BotStates.CHECK_ANSWER.value: [
+                MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
+                MessageHandler(Filters.regex('^Мой счёт$'), handler_score_request),
+                CommandHandler('help', help_user),
+            ]
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )

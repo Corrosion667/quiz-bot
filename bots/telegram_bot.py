@@ -13,7 +13,7 @@ from telegram.ext import (
 )
 
 from bots.settings import (
-    GREETING, HELP_TEXT, TASKS_DATABASE, USERS_DATABASE, SCORE_TEXT, BotStates, ButtonText,
+    GREETING, HELP_TEXT, SCORE_TEXT, TASKS_DATABASE, USERS_DATABASE, BotStates, ButtonText,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ def help_user(update: Update, context: CallbackContext) -> None:
 
 
 def handler_score_request(update: Update, context: CallbackContext) -> None:
-    """Send user information about his successful and failure attempts
+    """Send user information about his successful and failure attempts.
 
     Args:
         update: incoming update object.

@@ -1,22 +1,28 @@
 """Module for telegram implementation of quiz bot."""
 
+import json
 import logging
 import os
 from typing import Optional
 
 from dotenv import load_dotenv
+from redis import Redis
 from telegram import ReplyKeyboardMarkup, Update
 from telegram.ext import (
     CallbackContext, CommandHandler, ConversationHandler, Filters, MessageHandler, Updater,
 )
 
-from bots.settings import GREETING, HELP_TEXT, BotStates, ButtonText
+from bots.settings import (
+    GREETING, HELP_TEXT, TASKS_DATABASE, USERS_DATABASE, BotStates, ButtonText,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def start(update: Update, context: CallbackContext) -> Optional[int]:
-    """Greet the user. Handler for /start command.
+    """Handle /start command.
+
+    Greet the user and create record in the database if he is a newcomer.
 
     Args:
         update: incoming update object.
@@ -37,11 +43,18 @@ def start(update: Update, context: CallbackContext) -> Optional[int]:
         text=GREETING.format(user=user.first_name, help=HELP_TEXT),
         reply_markup=reply_markup,
     )
+    users_db = context.bot_data['users']
+    user_id_db = f'user_tg_{user.id}'
+    if not users_db.get(user_id_db):
+        users_db.set(
+            user_id_db, json.dumps({'last_asked_question': None, 'success': 0, 'failure': 0}),
+        )
+    logger.info(f'User {user_id_db} entered the quiz.')
     return BotStates.CHOOSING.value
 
 
 def help_user(update: Update, context: CallbackContext) -> None:
-    """Send information with bot fucnions when the command /help is issued.
+    """Send information with bot functions when the command /help is issued.
 
     Args:
         update: incoming update object.
@@ -93,6 +106,9 @@ def main() -> None:
     telegram_token = os.getenv('TELEGRAM_TOKEN')
     updater = Updater(telegram_token)
     dispatcher = updater.dispatcher
+    tasks_connector = Redis(db=TASKS_DATABASE, decode_responses=True)
+    users_connector = Redis(db=USERS_DATABASE, decode_responses=True)
+    dispatcher.bot_data = {'tasks': tasks_connector, 'users': users_connector}
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={

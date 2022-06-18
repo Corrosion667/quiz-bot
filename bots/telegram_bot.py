@@ -7,13 +7,14 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from redis import Redis
-from telegram import ReplyKeyboardMarkup, Update
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import (
     CallbackContext, CommandHandler, ConversationHandler, Filters, MessageHandler, Updater,
 )
 
 from bots.settings import (
-    GREETING, HELP_TEXT, SCORE_TEXT, TASKS_DATABASE, USERS_DATABASE, BotStates, ButtonText,
+    CANCEL_TEXT, GREETING, HELP_TEXT, SCORE_TEXT, TASKS_DATABASE, USERS_DATABASE, BotStates,
+    ButtonText,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ def start(update: Update, context: CallbackContext) -> Optional[int]:
         users_db.set(
             user_id_db, json.dumps({'last_asked_question': None, 'success': 0, 'failure': 0}),
         )
-    logger.info(f'User {user_id_db} entered the quiz.')
+    logger.info(f'User {user.id} entered the quiz.')
     return BotStates.CHOOSING.value
 
 
@@ -102,7 +103,7 @@ def handle_new_question_request(update: Update, context: CallbackContext) -> Opt
     return BotStates.CHOOSING.value
 
 
-def cancel(update: Update, context: CallbackContext) -> int:
+def cancel(update: Update, context: CallbackContext) -> Optional[int]:
     """Cancel and end the conversation.
 
     Args:
@@ -112,6 +113,12 @@ def cancel(update: Update, context: CallbackContext) -> int:
     Returns:
         Ending conversation state.
     """
+    user = update.effective_user
+    incoming_message = update.message
+    if incoming_message is None or user is None:
+        return None
+    incoming_message.reply_text(text=CANCEL_TEXT, reply_markup=ReplyKeyboardRemove())
+    logger.info(f'User {user.id} left the quiz.')
     return ConversationHandler.END
 
 

@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import string
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -13,11 +14,35 @@ from telegram.ext import (
 )
 
 from bots.settings import (
-    CANCEL_TEXT, GREETING, HELP_TEXT, SCORE_TEXT, TASKS_DATABASE, USERS_DATABASE, BotStates,
-    ButtonText,
+    CANCEL_TEXT, GREETING, HELP_TEXT, SCORE_TEXT, STRING_EQUALITY_RATIO, TASKS_DATABASE,
+    USERS_DATABASE, BotStates, ButtonText,
 )
+from difflib import SequenceMatcher
 
 logger = logging.getLogger(__name__)
+
+
+def is_correct_answer(users_answer: str, correct_answer: str) -> bool:
+    """Check if answer given by user os correct.
+
+    Args:
+        users_answer: answer received from user.
+        correct_answer: answer from the database.
+
+    Returns:
+        True if answer is correct else False.
+    """
+    filtered_users_answer = ''.join(
+        [symbol for symbol in users_answer.lower() if symbol not in string.punctuation]
+    )
+    filtered_correct_answer = ''.join(
+        [symbol for symbol in correct_answer.lower() if symbol not in string.punctuation]
+    )
+    if SequenceMatcher(
+            None, filtered_correct_answer, filtered_users_answer,
+    ).ratio() >= STRING_EQUALITY_RATIO:
+        return True
+    return False
 
 
 def start(update: Update, context: CallbackContext) -> Optional[int]:
@@ -67,7 +92,7 @@ def help_user(update: Update, context: CallbackContext) -> None:
     incoming_message.reply_text(text=HELP_TEXT)
 
 
-def handler_score_request(update: Update, context: CallbackContext) -> None:
+def handle_score_request(update: Update, context: CallbackContext) -> None:
     """Send user information about his successful and failure attempts.
 
     Args:
@@ -121,7 +146,9 @@ def handle_solution_attempt(update: Update, context: CallbackContext) -> Optiona
     saved_user_data = json.loads(users_db.get(user_id_db))
     asked_question = saved_user_data['last_asked_question']
     tasks_db = context.bot_data['tasks']
-    correct_answer = tasks_db.get(asked_question)
+    print(tasks_db.get(asked_question))
+    if is_correct_answer(incoming_message.text, tasks_db.get(asked_question)):
+        print(tasks_db.get(asked_question))
 
 
 def cancel(update: Update, context: CallbackContext) -> Optional[int]:
@@ -161,13 +188,14 @@ def main() -> None:
         states={
             BotStates.CHOOSING.value: [
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
-                MessageHandler(Filters.regex('^Мой счёт$'), handler_score_request),
+                MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
                 CommandHandler('help', help_user),
             ],
             BotStates.CHECK_ANSWER.value: [
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
-                MessageHandler(Filters.regex('^Мой счёт$'), handler_score_request),
+                MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
                 CommandHandler('help', help_user),
+                MessageHandler(Filters.text, handle_solution_attempt),
             ],
         },
         fallbacks=[CommandHandler('cancel', cancel)],

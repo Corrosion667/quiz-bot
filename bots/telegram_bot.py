@@ -111,6 +111,19 @@ def handle_new_question_request(update: Update, context: CallbackContext) -> Opt
     return BotStates.CHECK_ANSWER.value
 
 
+def handle_solution_attempt(update: Update, context: CallbackContext) -> Optional[int]:
+    user = update.effective_user
+    incoming_message = update.message
+    if incoming_message is None or user is None:
+        return None
+    user_id_db = f'user_tg_{user.id}'
+    users_db = context.bot_data['users']
+    saved_user_data = json.loads(users_db.get(user_id_db))
+    asked_question = saved_user_data['last_asked_question']
+    tasks_db = context.bot_data['tasks']
+    correct_answer = tasks_db.get(asked_question)
+
+
 def cancel(update: Update, context: CallbackContext) -> Optional[int]:
     """Cancel and end the conversation.
 

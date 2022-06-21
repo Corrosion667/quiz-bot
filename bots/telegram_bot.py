@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 import string
 from difflib import SequenceMatcher
 from typing import Optional
@@ -34,11 +35,12 @@ def is_correct_answer(users_answer: str, correct_answer: str) -> bool:
     Returns:
         True if answer is correct else False.
     """
+    commentless_answer = re.sub('\s?\(.+\)|\s?\[.+]', '', correct_answer)
+    filtered_correct_answer = ''.join(
+        [symbol for symbol in commentless_answer.lower() if symbol not in string.punctuation],
+    )
     filtered_users_answer = ''.join(
         [symbol for symbol in users_answer.lower() if symbol not in string.punctuation],
-    )
-    filtered_correct_answer = ''.join(
-        [symbol for symbol in correct_answer.lower() if symbol not in string.punctuation],
     )
     matching_ratio = SequenceMatcher(None, filtered_correct_answer, filtered_users_answer).ratio()
     return matching_ratio >= STRING_EQUALITY_RATIO

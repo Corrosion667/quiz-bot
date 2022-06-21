@@ -13,6 +13,10 @@ class ButtonText(Enum):
     SCORE = 'Мой счёт'
 
 
+PICTURE_INDICATOR = '(pic:'
+QUESTION_REGEX = '^Вопрос.+\n'
+ANSWER_REGEX = '^Ответ.+\n'
+
 QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')
 
 TASKS_DATABASE = 1

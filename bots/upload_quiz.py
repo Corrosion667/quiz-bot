@@ -7,7 +7,9 @@ from os.path import join
 from redis import Redis
 from redis.client import Pipeline
 
-from bots.settings import QUIZ_TASKS_DIR, TASKS_DATABASE
+from bots.settings import (
+    ANSWER_REGEX, PICTURE_INDICATOR, QUESTION_REGEX, QUIZ_TASKS_DIR, TASKS_DATABASE,
+)
 
 
 def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
@@ -19,14 +21,17 @@ def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
     """
     with open(path_to_file, encoding='KOI8-R') as quiz_file:
         quiz_content = quiz_file.read()
-    split_content = quiz_content.replace('\n\n\n', '\n\n').split('\n\n')
+    split_content = iter(quiz_content.replace('\n\n\n', '\n\n').split('\n\n'))
     questions = []
     answers = []
     for split in split_content:
-        if re.match('^Вопрос.+\n', split):
-            questions.append(re.sub('^Вопрос.+\n', '', split))
-        elif 'Ответ:\n' in split:
-            answers.append(re.sub('^Ответ.+\n', '', split))
+        if PICTURE_INDICATOR in split:
+            next(split_content, None)
+            continue
+        elif re.match(QUESTION_REGEX, split):
+            questions.append(re.sub(QUESTION_REGEX, '', split))
+        elif re.match(ANSWER_REGEX, split):
+            answers.append(re.sub(ANSWER_REGEX, '', split))
     for question, answer in zip(questions, answers):
         pipeline.set(question, answer)
 

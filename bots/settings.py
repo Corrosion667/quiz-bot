@@ -13,13 +13,6 @@ class ButtonText(Enum):
     SCORE = 'Мой счёт'
 
 
-class BotStates(Enum):
-    """Class with bot states for TG conversation handler."""
-
-    CHOOSING = 0
-    CHECK_ANSWER = 1
-
-
 QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')
 
 TASKS_DATABASE = 1
@@ -32,10 +25,13 @@ HELP_TEXT = (
     + f'Узнать счёт можно нажав "{ButtonText.SCORE.value}".\n'
     + '/cancel - закончить викторину.\n/help - получить справку о функционале бота.'
 )
-SCORE_TEXT = 'Правильных ответов: {successes}.\nНеправильных ответов: {failures}.'
+SCORE_TEXT = 'Правильных ответов: {successes}.\nНеугадано вопросов (сдались): {give_ups}.'
 CANCEL_TEXT = (
     'Спасибо за участие в квизе! Ваш прогресс сохранён.\n'
     + 'Для возобновления отправьте команду /start.'
 )
-
-STRING_EQUALITY_RATIO = 0.8
+NEXT = f'Для следующего вопроса нажмите "{ButtonText.NEW_QUESTION.value}"'
+RIGHT_ANSWER = f'Правильно, поздравляю! {NEXT}'
+WRONG_ANSWER = 'Ответ неверный, попробуйте ещё раз.'
+GIVE_UP = 'Правильный ответ:\n{answer}\n{next}'
+STRING_EQUALITY_RATIO = 0.7

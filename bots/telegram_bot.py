@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import string
+from difflib import SequenceMatcher
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -14,16 +15,17 @@ from telegram.ext import (
 )
 
 from bots.settings import (
-    CANCEL_TEXT, GREETING, HELP_TEXT, SCORE_TEXT, STRING_EQUALITY_RATIO, TASKS_DATABASE,
-    USERS_DATABASE, BotStates, ButtonText,
+    CANCEL_TEXT, GIVE_UP, GREETING, HELP_TEXT, NEXT, RIGHT_ANSWER, SCORE_TEXT,
+    STRING_EQUALITY_RATIO, TASKS_DATABASE, USERS_DATABASE, WRONG_ANSWER, ButtonText,
 )
-from difflib import SequenceMatcher
 
 logger = logging.getLogger(__name__)
 
+CHOOSING, CHECK_ANSWER = range(2)
+
 
 def is_correct_answer(users_answer: str, correct_answer: str) -> bool:
-    """Check if answer given by user os correct.
+    """Check if answer given by user is correct.
 
     Args:
         users_answer: answer received from user.
@@ -33,16 +35,13 @@ def is_correct_answer(users_answer: str, correct_answer: str) -> bool:
         True if answer is correct else False.
     """
     filtered_users_answer = ''.join(
-        [symbol for symbol in users_answer.lower() if symbol not in string.punctuation]
+        [symbol for symbol in users_answer.lower() if symbol not in string.punctuation],
     )
     filtered_correct_answer = ''.join(
-        [symbol for symbol in correct_answer.lower() if symbol not in string.punctuation]
+        [symbol for symbol in correct_answer.lower() if symbol not in string.punctuation],
     )
-    if SequenceMatcher(
-            None, filtered_correct_answer, filtered_users_answer,
-    ).ratio() >= STRING_EQUALITY_RATIO:
-        return True
-    return False
+    matching_ratio = SequenceMatcher(None, filtered_correct_answer, filtered_users_answer).ratio()
+    return matching_ratio >= STRING_EQUALITY_RATIO
 
 
 def start(update: Update, context: CallbackContext) -> Optional[int]:
@@ -57,9 +56,7 @@ def start(update: Update, context: CallbackContext) -> Optional[int]:
     Returns:
         Conversation state of command choosing.
     """
-    user = update.effective_user
-    incoming_message = update.message
-    if incoming_message is None or user is None:
+    if not ((incoming_message := update.message) and (user := update.effective_user)):
         return None
     keyboard_menu = [
         [ButtonText.NEW_QUESTION.value, ButtonText.GIVE_UP.value], [ButtonText.SCORE.value],
@@ -73,10 +70,10 @@ def start(update: Update, context: CallbackContext) -> Optional[int]:
     user_id_db = f'user_tg_{user.id}'
     if not users_db.get(user_id_db):
         users_db.set(
-            user_id_db, json.dumps({'last_asked_question': None, 'success': 0, 'failure': 0}),
+            user_id_db, json.dumps({'last_asked_question': None, 'success': 0, 'give_up': 0}),
         )
     logger.info(f'User {user.id} entered the quiz.')
-    return BotStates.CHOOSING.value
+    return CHOOSING
 
 
 def help_user(update: Update, context: CallbackContext) -> None:
@@ -86,29 +83,26 @@ def help_user(update: Update, context: CallbackContext) -> None:
         update: incoming update object.
         context: indicates that this is a callback function.
     """
-    incoming_message = update.message
-    if incoming_message is None:
+    if not (incoming_message := update.message):
         return
     incoming_message.reply_text(text=HELP_TEXT)
 
 
 def handle_score_request(update: Update, context: CallbackContext) -> None:
-    """Send user information about his successful and failure attempts.
+    """Send user information about his successful attempts and give ups.
 
     Args:
         update: incoming update object.
         context: indicates that this is a callback function.
     """
-    user = update.effective_user
-    incoming_message = update.message
-    if incoming_message is None or user is None:
+    if not ((incoming_message := update.message) and (user := update.effective_user)):
         return
     users_db = context.bot_data['users']
     user_id_db = f'user_tg_{user.id}'
     saved_user_data = json.loads(users_db.get(user_id_db))
     successes = saved_user_data['success']
-    failures = saved_user_data['failure']
-    incoming_message.reply_text(text=SCORE_TEXT.format(successes=successes, failures=failures))
+    give_ups = saved_user_data['give_up']
+    incoming_message.reply_text(text=SCORE_TEXT.format(successes=successes, give_ups=give_ups))
 
 
 def handle_new_question_request(update: Update, context: CallbackContext) -> Optional[int]:
@@ -121,9 +115,7 @@ def handle_new_question_request(update: Update, context: CallbackContext) -> Opt
     Returns:
         Conversation state of checking user's answer.
     """
-    user = update.effective_user
-    incoming_message = update.message
-    if incoming_message is None or user is None:
+    if not ((incoming_message := update.message) and (user := update.effective_user)):
         return None
     tasks_db = context.bot_data['tasks']
     random_question = tasks_db.randomkey()
@@ -133,22 +125,61 @@ def handle_new_question_request(update: Update, context: CallbackContext) -> Opt
     saved_user_data['last_asked_question'] = random_question
     users_db.set(user_id_db, json.dumps(saved_user_data))
     incoming_message.reply_text(random_question)
-    return BotStates.CHECK_ANSWER.value
+    return CHECK_ANSWER
 
 
 def handle_solution_attempt(update: Update, context: CallbackContext) -> Optional[int]:
-    user = update.effective_user
-    incoming_message = update.message
-    if incoming_message is None or user is None:
+    """Check user's answer.
+
+    Args:
+        update: incoming update object.
+        context: indicates that this is a callback function.
+
+    Returns:
+        Conversation state of checking user's answer or command choosing.
+    """
+    if not ((incoming_message := update.message) and (user := update.effective_user)):
         return None
     user_id_db = f'user_tg_{user.id}'
     users_db = context.bot_data['users']
     saved_user_data = json.loads(users_db.get(user_id_db))
     asked_question = saved_user_data['last_asked_question']
     tasks_db = context.bot_data['tasks']
-    print(tasks_db.get(asked_question))
-    if is_correct_answer(incoming_message.text, tasks_db.get(asked_question)):
-        print(tasks_db.get(asked_question))
+    correct_answer = tasks_db.get(asked_question)
+    users_answer = update.message.text
+    if not users_answer:
+        return None
+    if is_correct_answer(users_answer=users_answer, correct_answer=correct_answer):
+        saved_user_data['success'] += 1
+        users_db.set(user_id_db, json.dumps(saved_user_data))
+        incoming_message.reply_text(RIGHT_ANSWER)
+        return CHOOSING
+    incoming_message.reply_text(WRONG_ANSWER)
+    return CHECK_ANSWER
+
+
+def handle_give_up_request(update: Update, context: CallbackContext) -> Optional[int]:
+    """Send user right answer whe he gives up.
+
+    Args:
+        update: incoming update object.
+        context: indicates that this is a callback function.
+
+    Returns:
+        Conversation state of checking user's answer.
+    """
+    if not ((incoming_message := update.message) and (user := update.effective_user)):
+        return None
+    user_id_db = f'user_tg_{user.id}'
+    users_db = context.bot_data['users']
+    saved_user_data = json.loads(users_db.get(user_id_db))
+    saved_user_data['failure'] += 1
+    users_db.set(user_id_db, json.dumps(saved_user_data))
+    tasks_db = context.bot_data['tasks']
+    asked_question = saved_user_data['last_asked_question']
+    right_answer = tasks_db.get(asked_question)
+    incoming_message.reply_text(GIVE_UP.format(answer=right_answer, next=NEXT))
+    return CHOOSING
 
 
 def cancel(update: Update, context: CallbackContext) -> Optional[int]:
@@ -161,9 +192,7 @@ def cancel(update: Update, context: CallbackContext) -> Optional[int]:
     Returns:
         Ending conversation state.
     """
-    user = update.effective_user
-    incoming_message = update.message
-    if incoming_message is None or user is None:
+    if not ((incoming_message := update.message) and (user := update.effective_user)):
         return None
     incoming_message.reply_text(text=CANCEL_TEXT, reply_markup=ReplyKeyboardRemove())
     logger.info(f'User {user.id} left the quiz.')
@@ -186,19 +215,20 @@ def main() -> None:
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            BotStates.CHOOSING.value: [
+            CHOOSING: [
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
                 MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
                 CommandHandler('help', help_user),
             ],
-            BotStates.CHECK_ANSWER.value: [
+            CHECK_ANSWER: [
                 MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
                 MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
+                MessageHandler(Filters.regex('^Сдаться'), handle_give_up_request),
                 CommandHandler('help', help_user),
                 MessageHandler(Filters.text, handle_solution_attempt),
             ],
         },
-        fallbacks=[CommandHandler('cancel', cancel)],
+        fallbacks=[MessageHandler(Filters.command, cancel)],
     )
     dispatcher.add_handler(conversation_handler)
     updater.start_polling()

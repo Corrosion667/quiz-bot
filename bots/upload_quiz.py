@@ -19,13 +19,13 @@ def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
     """
     with open(path_to_file, encoding='KOI8-R') as quiz_file:
         quiz_content = quiz_file.read()
-    split_content = quiz_content.split('\n\n')
+    split_content = quiz_content.replace('\n\n\n', '\n\n').split('\n\n')
     questions = []
     answers = []
     for split in split_content:
-        if 'Вопрос' in split:
+        if re.match('^Вопрос.+\n', split):
             questions.append(re.sub('^Вопрос.+\n', '', split))
-        elif 'Ответ' in split:
+        elif 'Ответ:\n' in split:
             answers.append(re.sub('^Ответ.+\n', '', split))
     for question, answer in zip(questions, answers):
         pipeline.set(question, answer)

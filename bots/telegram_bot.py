@@ -35,7 +35,7 @@ def is_correct_answer(users_answer: str, correct_answer: str) -> bool:
     Returns:
         True if answer is correct else False.
     """
-    commentless_answer = re.sub('\s?\(.+\)|\s?\[.+]', '', correct_answer)
+    commentless_answer = re.sub(r'\s?\(.+\)|\s?\[.+]', '', correct_answer)
     filtered_correct_answer = ''.join(
         [symbol for symbol in commentless_answer.lower() if symbol not in string.punctuation],
     )

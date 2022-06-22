@@ -178,7 +178,7 @@ def handle_give_up_request(update: Update, context: CallbackContext) -> Optional
     user_id_db = f'user_tg_{user.id}'
     users_db = context.bot_data['users']
     saved_user_data = json.loads(users_db.get(user_id_db))
-    saved_user_data['failure'] += 1
+    saved_user_data['give_up'] += 1
     users_db.set(user_id_db, json.dumps(saved_user_data))
     tasks_db = context.bot_data['tasks']
     asked_question = saved_user_data['last_asked_question']
@@ -230,10 +230,10 @@ def main() -> None:
                 MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
                 MessageHandler(Filters.regex('^Сдаться'), handle_give_up_request),
                 CommandHandler('help', help_user),
-                MessageHandler(Filters.text, handle_solution_attempt),
+                MessageHandler(Filters.text ^ Filters.command, handle_solution_attempt),
             ],
         },
-        fallbacks=[MessageHandler(Filters.command, cancel)],
+        fallbacks=[CommandHandler('cancel', cancel)],
     )
     dispatcher.add_handler(conversation_handler)
     updater.start_polling()

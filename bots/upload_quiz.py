@@ -15,6 +15,8 @@ from bots.settings import (
 def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
     """Parse quiz file and append creation of questions and answers in Redis to pipeline.
 
+    If question supposed to be with picture he won't be added to database.
+
     Args:
         path_to_file: path to file with quiz content.
         pipeline: Redis pipeline for bulk loading.

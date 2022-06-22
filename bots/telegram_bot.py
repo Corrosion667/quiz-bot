@@ -28,6 +28,9 @@ CHOOSING, CHECK_ANSWER = range(2)
 def is_correct_answer(users_answer: str, correct_answer: str) -> bool:
     """Check if answer given by user is correct.
 
+    Comments in brackets [] or () aren't taken into consideration when counting string match ratio.
+    Punctuation symbols are excluded from calculation too.
+
     Args:
         users_answer: answer received from user.
         correct_answer: answer from the database.

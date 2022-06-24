@@ -64,7 +64,7 @@ def start(update: Update, context: CallbackContext) -> Optional[int]:
     if not ((incoming_message := update.message) and (user := update.effective_user)):
         return None
     keyboard_menu = [
-        [ButtonText.NEW_QUESTION.value, ButtonText.GIVE_UP.value], [ButtonText.SCORE.value],
+        [ButtonText.QUESTION.value, ButtonText.GIVE_UP.value], [ButtonText.SCORE.value],
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard_menu)
     incoming_message.reply_text(
@@ -221,14 +221,20 @@ def main() -> None:
         entry_points=[CommandHandler('start', start)],
         states={
             CHOOSING: [
-                MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
-                MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
+                MessageHandler(
+                    Filters.regex(f'^{ButtonText.QUESTION.value}$'), handle_new_question_request,
+                ),
+                MessageHandler(Filters.regex(f'^{ButtonText.SCORE.value}$'), handle_score_request),
                 CommandHandler('help', help_user),
             ],
             CHECK_ANSWER: [
-                MessageHandler(Filters.regex('^Новый вопрос$'), handle_new_question_request),
-                MessageHandler(Filters.regex('^Мой счёт$'), handle_score_request),
-                MessageHandler(Filters.regex('^Сдаться'), handle_give_up_request),
+                MessageHandler(
+                    Filters.regex(f'^{ButtonText.QUESTION.value}$'), handle_new_question_request,
+                ),
+                MessageHandler(Filters.regex(f'^{ButtonText.SCORE.value}$'), handle_score_request),
+                MessageHandler(
+                    Filters.regex(f'^{ButtonText.GIVE_UP.value}$'), handle_give_up_request,
+                ),
                 CommandHandler('help', help_user),
                 MessageHandler(Filters.text ^ Filters.command, handle_solution_attempt),
             ],

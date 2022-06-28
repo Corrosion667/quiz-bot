@@ -2,7 +2,6 @@
 
 import json
 import os
-from typing import Optional
 
 from dotenv import load_dotenv
 from redis import Redis
@@ -12,7 +11,10 @@ from vk_api.longpoll import VkEventType, VkLongPoll
 from vk_api.utils import get_random_id
 from vk_api.vk_api import VkApiMethod
 
-from bots.settings import SCORE_TEXT, TASKS_DATABASE, USERS_DATABASE, ButtonText
+from bots.settings import (
+    GIVE_UP, GIVE_UP_STUB_VK, GREETING_VK, NEXT, SCORE_TEXT, TASKS_DATABASE, USERS_DATABASE,
+    ButtonText,
+)
 
 
 def create_keyboard() -> str:
@@ -44,98 +46,90 @@ def interact_longpoll(vk_long_poll: VkLongPoll, vk_api_method: VkApiMethod) -> N
         if not (event.type == VkEventType.MESSAGE_NEW and event.to_me):
             continue
         user_id = event.user_id
-        if event.message == ButtonText.QUESTION.value:
-            question = get_new_question(databases=databases, user_id=user_id)
-            vk_api_method.messages.send(
-                user_id=user_id, message=question, random_id=get_random_id(), keyboard=keyboard,
+        user_id_db = f'user_vk_{user_id}'
+        if not users_connector.get(user_id_db):
+            users_connector.set(
+                user_id_db, json.dumps({'last_asked_question': '', 'success': 0, 'give_up': 0}),
             )
-        if event.message == ButtonText.GIVE_UP.value:
-            answer = handle_give_up_request(databases=databases, user_id=user_id)
-            if answer:
-                vk_api_method.messages.send(
-                    user_id=user_id, message=answer, random_id=get_random_id(), keyboard=keyboard,
-                )
-        if event.message == ButtonText.SCORE.value:
-            score_text = handle_score_request(databases=databases, user_id=user_id)
-            vk_api_method.messages.send(
-                user_id=user_id, message=score_text, random_id=get_random_id(), keyboard=keyboard,
-            )
-        handle_solution_attempt()
+            reply_message = GREETING_VK
+        elif event.message == ButtonText.QUESTION.value:
+            reply_message = handle_new_question_request(databases=databases, user_id=user_id_db)
+        elif event.message == ButtonText.GIVE_UP.value:
+            reply_message = handle_give_up_request(databases=databases, user_id=user_id_db)
+        elif event.message == ButtonText.SCORE.value:
+            reply_message = handle_score_request(databases=databases, user_id=user_id_db)
+        else:
+            reply_message = handle_solution_attempt()
+        vk_api_method.messages.send(
+            user_id=user_id, message=reply_message, random_id=get_random_id(), keyboard=keyboard,
+        )
 
 
-def get_new_question(databases: dict, user_id: int) -> str:
+def handle_new_question_request(databases: dict, user_id: str) -> str:
     """Get random question from database and update it as last asked question for user.
 
     Args:
         databases: connectors to redis databases (users and tasks).
-        user_id: id of the user in Vkontakte.
+        user_id: id of the user in Vkontakte in database representation.
 
     Returns:
         Random question for user.
     """
     tasks_db = databases['tasks']
     question = tasks_db.randomkey()
-    user_id_db = f'user_vk_{user_id}'
     users_db = databases['users']
-    saved_user_data = users_db.get(user_id_db)
-    if saved_user_data:
-        decoded_user_data = json.loads(saved_user_data)
-        decoded_user_data['last_asked_question'] = question
-        users_db.set(user_id_db, json.dumps(decoded_user_data))
-    else:
-        users_db.set(
-            user_id_db, json.dumps({'last_asked_question': question, 'success': 0, 'give_up': 0}),
-        )
+    saved_user_data = json.loads(users_db.get(user_id))
+    saved_user_data['last_asked_question'] = question
+    users_db.set(user_id, json.dumps(saved_user_data))
     return question
 
 
-def handle_give_up_request(databases: dict, user_id: int) -> Optional[str]:
+def handle_give_up_request(databases: dict, user_id: str) -> str:
     """Get answer for last asked question to user and increase give up counter.
 
     Args:
         databases: connectors to redis databases (users and tasks).
-        user_id: id of the user in Vkontakte.
+        user_id: id of the user in Vkontakte in database representation.
 
     Returns:
-        Answer for last asked question or None if there haven't been any questions for user yet.
+        Answer for asked question or stub message if there haven't been any questions for user yet.
     """
     users_db = databases['users']
-    user_id_db = f'user_vk_{user_id}'
-    saved_user_data = users_db.get(user_id_db)
-    if not saved_user_data:
-        return None
-    decoded_user_data = json.loads(saved_user_data)
-    decoded_user_data['give_up'] += 1
-    users_db.set(user_id_db, json.dumps(decoded_user_data))
+    saved_user_data = json.loads(users_db.get(user_id))
+    asked_question = saved_user_data['last_asked_question']
+    if not asked_question:
+        return GIVE_UP_STUB_VK
+    saved_user_data['give_up'] += 1
+    saved_user_data['last_asked_question'] = ''
+    users_db.set(user_id, json.dumps(saved_user_data))
     tasks_db = databases['tasks']
-    asked_question = decoded_user_data['last_asked_question']
-    return tasks_db.get(asked_question)
+    return GIVE_UP.format(answer=tasks_db.get(asked_question), next=NEXT)
 
 
-def handle_score_request(databases: dict, user_id: int) -> str:
+def handle_score_request(databases: dict, user_id: str) -> str:
     """Get user's score: successes and give ups.
 
     Args:
         databases: connectors to redis databases (users and tasks).
-        user_id: id of the user in Vkontakte.
+        user_id: id of the user in Vkontakte in database representation.
 
     Returns:
         Score text message for user.
     """
     users_db = databases['users']
-    user_id_db = f'user_vk_{user_id}'
-    saved_user_data = users_db.get(user_id_db)
-    if not saved_user_data:
-        return SCORE_TEXT.format(successes=0, give_ups=0)
-    decoded_user_data = json.loads(saved_user_data)
-    successes = decoded_user_data['success']
-    give_ups = decoded_user_data['give_up']
+    saved_user_data = json.loads(users_db.get(user_id))
+    successes = saved_user_data['success']
+    give_ups = saved_user_data['give_up']
     return SCORE_TEXT.format(successes=successes, give_ups=give_ups)
 
 
-def handle_solution_attempt() -> None:
-    """Docstring."""
-    pass  # noqa: WPS420
+def handle_solution_attempt() -> str:
+    """Docstring.
+
+    Returns:
+        stub string.
+    """
+    return 'STUB'
 
 
 def main() -> None:

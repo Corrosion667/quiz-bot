@@ -22,7 +22,13 @@ QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tas
 TASKS_DATABASE = 1
 USERS_DATABASE = 2
 
-GREETING = 'Приветствуем вас в нашей викторине, {user}!\n{help}'
+GREETING_VK = (
+    'Приветствуем вас в нашей викторине!\n'
+    + f'Нажмите "{ButtonText.QUESTION.value}" для начала викторины.\n'
+    + f'Нажмите "{ButtonText.GIVE_UP.value}", чтобы узнать правильный ответ.\n'
+    + f'Узнать счёт можно нажав "{ButtonText.SCORE.value}".\n'
+)
+GREETING_TG = 'Приветствуем вас в нашей викторине, {user}!\n{help}'
 HELP_TEXT = (
     f'Нажмите "{ButtonText.QUESTION.value}" для начала викторины.\n'
     + f'Нажмите "{ButtonText.GIVE_UP.value}", чтобы узнать правильный ответ.\n'
@@ -38,4 +44,5 @@ NEXT = f'Для следующего вопроса нажмите "{ButtonText.
 RIGHT_ANSWER = f'Правильно, поздравляю! {NEXT}'
 WRONG_ANSWER = 'Ответ неверный, попробуйте ещё раз.'
 GIVE_UP = 'Правильный ответ:\n{answer}\n{next}'
+GIVE_UP_STUB_VK = f'Вопрос ещё не был задан! Пожалуйста, нажмите {ButtonText.QUESTION.value}!'
 STRING_EQUALITY_RATIO = 0.7

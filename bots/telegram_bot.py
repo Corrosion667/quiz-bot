@@ -16,7 +16,7 @@ from telegram.ext import (
 )
 
 from bots.settings import (
-    CANCEL_TEXT, GIVE_UP, GREETING, HELP_TEXT, NEXT, RIGHT_ANSWER, SCORE_TEXT,
+    CANCEL_TEXT, GIVE_UP, GREETING_TG, HELP_TEXT, NEXT, RIGHT_ANSWER, SCORE_TEXT,
     STRING_EQUALITY_RATIO, TASKS_DATABASE, USERS_DATABASE, WRONG_ANSWER, ButtonText,
 )
 
@@ -68,7 +68,7 @@ def start(update: Update, context: CallbackContext) -> Optional[int]:
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard_menu)
     incoming_message.reply_text(
-        text=GREETING.format(user=user.first_name, help=HELP_TEXT),
+        text=GREETING_TG.format(user=user.first_name, help=HELP_TEXT),
         reply_markup=reply_markup,
     )
     users_db = context.bot_data['users']

@@ -44,5 +44,5 @@ NEXT = f'Для следующего вопроса нажмите "{ButtonText.
 RIGHT_ANSWER = f'Правильно, поздравляю! {NEXT}'
 WRONG_ANSWER = 'Ответ неверный, попробуйте ещё раз.'
 GIVE_UP = 'Правильный ответ:\n{answer}\n{next}'
-GIVE_UP_STUB_VK = f'Вопрос ещё не был задан! Пожалуйста, нажмите {ButtonText.QUESTION.value}!'
+NO_QUESTION_STUB = f'Вопрос ещё не был задан! Пожалуйста, нажмите {ButtonText.QUESTION.value}!'
 STRING_EQUALITY_RATIO = 0.7

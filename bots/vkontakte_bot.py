@@ -1,7 +1,9 @@
 """Module for vkontakte implementation of quiz bot."""
 
 import json
+import logging
 import os
+import time
 
 from dotenv import load_dotenv
 from redis import Redis
@@ -14,8 +16,10 @@ from vk_api.vk_api import VkApiMethod
 from bots.check_answer import is_correct_answer
 from bots.settings import (
     GIVE_UP, GREETING_VK, NEXT, NO_QUESTION_STUB, RIGHT_ANSWER, SCORE_TEXT, TASKS_DATABASE,
-    USERS_DATABASE, WRONG_ANSWER, ButtonText,
+    UNEXPECTED_ERROR_LOG, UNEXPECTED_ERROR_TIMEOUT, USERS_DATABASE, WRONG_ANSWER, ButtonText,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def create_keyboard() -> str:
@@ -52,6 +56,7 @@ def interact_longpoll(vk_long_poll: VkLongPoll, vk_api_method: VkApiMethod) -> N
             users_connector.set(
                 user_id_db, json.dumps({'last_asked_question': '', 'success': 0, 'give_up': 0}),
             )
+            logger.info(f'User {user_id} entered the quiz.')
             reply_message = GREETING_VK
         elif event.message == ButtonText.QUESTION.value:
             reply_message = handle_new_question_request(databases=databases, user_id=user_id_db)
@@ -155,13 +160,25 @@ def handle_solution_attempt(databases: dict, user_id: str, users_answer: str) ->
 
 def main() -> None:
     """Run the bot as script."""
+    logging.basicConfig(
+        format='VK_BOT %(asctime)s %(levelname)s: %(message)s',
+        level=logging.INFO,
+    )
     load_dotenv()
     vk_token = os.getenv('VKONTAKTE_TOKEN')
     vk_api = VkApi(token=vk_token)
     vk_api_connector = vk_api.get_api()
     vk_long_poll = VkLongPoll(vk_api)
-    while True:  # noqa: WPS457
-        interact_longpoll(vk_long_poll=vk_long_poll, vk_api_method=vk_api_connector)
+    logger.info('Bot started.')
+    while True:
+        try:
+            interact_longpoll(vk_long_poll=vk_long_poll, vk_api_method=vk_api_connector)
+        except Exception as exc:
+            error_message = UNEXPECTED_ERROR_LOG.format(
+                exception=exc, timeout=UNEXPECTED_ERROR_TIMEOUT,
+            )
+            logger.error(error_message)
+            time.sleep(UNEXPECTED_ERROR_TIMEOUT)
 
 
 if __name__ == '__main__':

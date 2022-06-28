@@ -46,3 +46,6 @@ WRONG_ANSWER = 'Ответ неверный, попробуйте ещё раз.
 GIVE_UP = 'Правильный ответ:\n{answer}\n{next}'
 NO_QUESTION_STUB = f'Вопрос ещё не был задан! Пожалуйста, нажмите {ButtonText.QUESTION.value}!'
 STRING_EQUALITY_RATIO = 0.7
+
+UNEXPECTED_ERROR_LOG = '{exception}\nUnexpected error happened! Retrying in {timeout} seconds.'
+UNEXPECTED_ERROR_TIMEOUT = 100

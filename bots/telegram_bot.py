@@ -178,6 +178,16 @@ def cancel(update: Update, context: CallbackContext) -> Optional[int]:
     return ConversationHandler.END
 
 
+def error_handler(update: object, context: CallbackContext) -> None:
+    """Log the error happened during bot running.
+
+    Args:
+        update: incoming update object.
+        context: indicates that this is a callback function.
+    """
+    logger.error(msg='Exception while handling an update:', exc_info=context.error)
+
+
 def main() -> None:
     """Run the bot as script."""
     logging.basicConfig(
@@ -216,6 +226,7 @@ def main() -> None:
         fallbacks=[CommandHandler('cancel', cancel)],
     )
     dispatcher.add_handler(conversation_handler)
+    dispatcher.add_error_handler(error_handler)
     updater.start_polling()
     logger.info('Bot started.')
     updater.idle()

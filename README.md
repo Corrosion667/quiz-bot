@@ -36,11 +36,11 @@ git clone https://github.com/Corrosion667/quiz-bot.git
 ```
 2. Create **.env** file and set the <ins>following environmental variables</ins> *(as in the .env(example) file)*:
 
-| Environmental     | Description                                                                  |
-|-------------------|------------------------------------------------------------------------------|
-| `TELEGRAM_TOKEN`  | bot token from @BotFather in telegram                                        |       
-| `VKONTAKTE_TOKEN` | group token of vkontakte                                                     |
-| `QUIZ_TASKS_DIR`  | folder with tasks for quiz; by default the directory of project will be used |
+| Environmental     | Description                                                                                        |
+|-------------------|----------------------------------------------------------------------------------------------------|
+| `TELEGRAM_TOKEN`  | bot token from @BotFather in telegram                                                              |       
+| `VKONTAKTE_TOKEN` | group token of vkontakte                                                                           |
+| `QUIZ_TASKS_DIR`  | absolute path to folder with tasks for quiz; by default the main directory of project will be used |
 3. Run bots with docker compose:
 ```bash
 docker-compose up -d

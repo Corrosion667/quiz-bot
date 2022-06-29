@@ -17,7 +17,7 @@ PICTURE_INDICATOR = '(pic:'
 QUESTION_REGEX = '^Вопрос.+\n'
 ANSWER_REGEX = '^Ответ.+\n'
 
-QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')
+DEFAULT_QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')
 
 TASKS_DATABASE = 1
 USERS_DATABASE = 2

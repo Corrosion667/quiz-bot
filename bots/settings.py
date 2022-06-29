@@ -14,8 +14,8 @@ class ButtonText(Enum):
 
 
 PICTURE_INDICATOR = '(pic:'
-QUESTION_REGEX = '^Вопрос.+\n'
-ANSWER_REGEX = '^Ответ.+\n'
+QUESTION_REGEX = r'^Вопрос.+\n'
+ANSWER_REGEX = r'^Ответ.+\n'
 
 DEFAULT_QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')
 

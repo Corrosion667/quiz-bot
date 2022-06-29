@@ -1,6 +1,8 @@
 """Module for creating quiz questions and answers pairs in Redis from quiz fixture files."""
 
+import logging
 import re
+import time
 from os import listdir
 from os.path import join
 
@@ -10,6 +12,8 @@ from redis.client import Pipeline
 from bots.settings import (
     ANSWER_REGEX, PICTURE_INDICATOR, QUESTION_REGEX, QUIZ_TASKS_DIR, TASKS_DATABASE,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
@@ -40,13 +44,20 @@ def parse_quiz_file(path_to_file: str, pipeline: Pipeline) -> None:
 
 def load_quiz_tasks() -> None:
     """Script for loading quiz questions and answers to Redis from all quiz files."""
+    starting_time = time.time()
+    logger.info('Started uploading quiz tasks.')
     redis_client = Redis(db=TASKS_DATABASE)
     loading_pipeline = redis_client.pipeline()
     quiz_files_paths = [join(QUIZ_TASKS_DIR, file_name) for file_name in listdir(QUIZ_TASKS_DIR)]
     for path in quiz_files_paths:
         parse_quiz_file(path_to_file=path, pipeline=loading_pipeline)
     loading_pipeline.execute()
+    logger.info(f'Uploading finished in {time.time() - starting_time} seconds.')
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        format='QUIZ_UPLOAD %(asctime)s %(levelname)s: %(message)s',
+        level=logging.INFO,
+    )
     load_quiz_tasks()

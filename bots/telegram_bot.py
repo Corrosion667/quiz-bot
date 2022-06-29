@@ -14,8 +14,8 @@ from telegram.ext import (
 
 from bots.check_answer import is_correct_answer
 from bots.settings import (
-    CANCEL_TEXT, GIVE_UP, GREETING_TG, HELP_TEXT, NEXT, RIGHT_ANSWER, SCORE_TEXT, TASKS_DATABASE,
-    USERS_DATABASE, WRONG_ANSWER, ButtonText,
+    CANCEL_TEXT, GIVE_UP, GREETING_TG, HELP_TEXT, NEXT, REDIS_HOST, RIGHT_ANSWER, SCORE_TEXT,
+    TASKS_DATABASE, USERS_DATABASE, WRONG_ANSWER, ButtonText,
 )
 
 logger = logging.getLogger(__name__)
@@ -198,8 +198,8 @@ def main() -> None:
     telegram_token = os.getenv('TELEGRAM_TOKEN')
     updater = Updater(telegram_token)
     dispatcher = updater.dispatcher
-    tasks_connector = Redis(db=TASKS_DATABASE, decode_responses=True)
-    users_connector = Redis(db=USERS_DATABASE, decode_responses=True)
+    tasks_connector = Redis(host=REDIS_HOST, db=TASKS_DATABASE, decode_responses=True)
+    users_connector = Redis(host=REDIS_HOST, db=USERS_DATABASE, decode_responses=True)
     dispatcher.bot_data = {'tasks': tasks_connector, 'users': users_connector}
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],

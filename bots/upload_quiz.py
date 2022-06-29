@@ -10,7 +10,7 @@ from redis import Redis
 from redis.client import Pipeline
 
 from bots.settings import (
-    ANSWER_REGEX, PICTURE_INDICATOR, QUESTION_REGEX, QUIZ_TASKS_DIR, TASKS_DATABASE,
+    ANSWER_REGEX, PICTURE_INDICATOR, QUESTION_REGEX, QUIZ_TASKS_DIR, REDIS_HOST, TASKS_DATABASE,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def load_quiz_tasks() -> None:
     """Script for loading quiz questions and answers to Redis from all quiz files."""
     starting_time = time.time()
     logger.info('Started uploading quiz tasks.')
-    redis_client = Redis(db=TASKS_DATABASE)
+    redis_client = Redis(host=REDIS_HOST, db=TASKS_DATABASE)
     loading_pipeline = redis_client.pipeline()
     quiz_files_paths = [join(QUIZ_TASKS_DIR, file_name) for file_name in listdir(QUIZ_TASKS_DIR)]
     for path in quiz_files_paths:

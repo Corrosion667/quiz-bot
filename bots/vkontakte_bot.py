@@ -15,8 +15,9 @@ from vk_api.vk_api import VkApiMethod
 
 from bots.check_answer import is_correct_answer
 from bots.settings import (
-    GIVE_UP, GREETING_VK, NEXT, NO_QUESTION_STUB, RIGHT_ANSWER, SCORE_TEXT, TASKS_DATABASE,
-    UNEXPECTED_ERROR_LOG, UNEXPECTED_ERROR_TIMEOUT, USERS_DATABASE, WRONG_ANSWER, ButtonText,
+    GIVE_UP, GREETING_VK, NEXT, NO_QUESTION_STUB, REDIS_HOST, RIGHT_ANSWER, SCORE_TEXT,
+    TASKS_DATABASE, UNEXPECTED_ERROR_LOG, UNEXPECTED_ERROR_TIMEOUT, USERS_DATABASE, WRONG_ANSWER,
+    ButtonText,
 )
 
 logger = logging.getLogger(__name__)
@@ -43,8 +44,8 @@ def interact_longpoll(vk_long_poll: VkLongPoll, vk_api_method: VkApiMethod) -> N
         vk_long_poll: instance of VK Long Poll.
         vk_api_method: instance of VK Api Method.
     """
-    tasks_connector = Redis(db=TASKS_DATABASE, decode_responses=True)
-    users_connector = Redis(db=USERS_DATABASE, decode_responses=True)
+    tasks_connector = Redis(host=REDIS_HOST, db=TASKS_DATABASE, decode_responses=True)
+    users_connector = Redis(host=REDIS_HOST, db=USERS_DATABASE, decode_responses=True)
     databases = {'tasks': tasks_connector, 'users': users_connector}
     keyboard = create_keyboard()
     for event in vk_long_poll.listen():

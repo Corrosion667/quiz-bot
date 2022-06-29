@@ -21,6 +21,7 @@ QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tas
 
 TASKS_DATABASE = 1
 USERS_DATABASE = 2
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 
 GREETING_VK = (
     'Приветствуем вас в нашей викторине!\n'

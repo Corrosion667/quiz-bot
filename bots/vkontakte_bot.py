@@ -14,13 +14,15 @@ from vk_api.utils import get_random_id
 from vk_api.vk_api import VkApiMethod
 
 from bots.check_answer import is_correct_answer
-from bots.settings import (
+from bots.constants import (
     GIVE_UP, GREETING_VK, NEXT, NO_QUESTION_STUB, REDIS_HOST, RIGHT_ANSWER, SCORE_TEXT,
-    TASKS_DATABASE, UNEXPECTED_ERROR_LOG, UNEXPECTED_ERROR_TIMEOUT, USERS_DATABASE, WRONG_ANSWER,
-    ButtonText,
+    TASKS_DATABASE, USERS_DATABASE, WRONG_ANSWER, ButtonText,
 )
 
 logger = logging.getLogger(__name__)
+
+UNEXPECTED_ERROR_LOG = '{exception}\nUnexpected error happened! Retrying in {timeout} seconds.'
+UNEXPECTED_ERROR_TIMEOUT = 100
 
 
 def create_keyboard() -> str:

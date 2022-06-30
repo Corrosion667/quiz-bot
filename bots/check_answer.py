@@ -4,7 +4,7 @@ import re
 import string
 from difflib import SequenceMatcher
 
-from bots.settings import STRING_EQUALITY_RATIO
+STRING_EQUALITY_RATIO = 0.7
 
 
 def is_correct_answer(users_answer: str, correct_answer: str) -> bool:

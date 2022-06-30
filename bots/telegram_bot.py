@@ -13,7 +13,7 @@ from telegram.ext import (
 )
 
 from bots.check_answer import is_correct_answer
-from bots.settings import (
+from bots.constants import (
     CANCEL_TEXT, GIVE_UP, GREETING_TG, HELP_TEXT, NEXT, REDIS_HOST, RIGHT_ANSWER, SCORE_TEXT,
     TASKS_DATABASE, USERS_DATABASE, WRONG_ANSWER, ButtonText,
 )

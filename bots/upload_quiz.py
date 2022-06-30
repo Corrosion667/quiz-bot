@@ -5,16 +5,18 @@ import os
 import re
 import time
 from os.path import join
+from pathlib import Path
 
 from dotenv import load_dotenv
 from redis import Redis
 
-from bots.settings import (
-    ANSWER_REGEX, DEFAULT_QUIZ_TASKS_DIR, PICTURE_INDICATOR, QUESTION_REGEX, REDIS_HOST,
-    TASKS_DATABASE,
+from bots.constants import (
+    ANSWER_REGEX, PICTURE_INDICATOR, QUESTION_REGEX, REDIS_HOST, TASKS_DATABASE,
 )
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_QUIZ_TASKS_DIR = os.path.join(Path(__file__).absolute().parent.parent, 'quiz_tasks')
 
 
 def parse_quiz_file(path_to_file: str) -> zip:
